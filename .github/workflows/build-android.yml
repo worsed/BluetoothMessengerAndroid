@@ -1,0 +1,78 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+      working-directory: BluetoothMessengerAndroid
+    
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+      working-directory: BluetoothMessengerAndroid
+    
+    - name: Build Release APK
+      run: ./gradlew assembleRelease
+      working-directory: BluetoothMessengerAndroid
+    
+    - name: List APK files
+      run: |
+        echo "✅ APK files created:"
+        find app/build/outputs/apk -name "*.apk" -type f
+      working-directory: BluetoothMessengerAndroid
+    
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: BluetoothMessenger-Debug
+        path: BluetoothMessengerAndroid/app/build/outputs/apk/debug/*.apk
+        retention-days: 30
+    
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: BluetoothMessenger-Release
+        path: BluetoothMessengerAndroid/app/build/outputs/apk/release/*.apk
+        retention-days: 30
+    
+    - name: Build Summary
+      run: |
+        echo "╔════════════════════════════════════════════════════════════╗"
+        echo "║           ✅ ANDROID BUILD COMPLETED SUCCESSFULLY          ║"
+        echo "╚════════════════════════════════════════════════════════════╝"
+        echo ""
+        echo "📦 APK files created:"
+        echo "   • app-debug.apk (для тестирования)"
+        echo "   • app-release-unsigned.apk (для релиза)"
+        echo ""
+        echo "📥 Скачайте APK из вкладки Artifacts"
+        echo ""
+        echo "📱 Установка на Android:"
+        echo "   1. Скачайте app-debug.apk"
+        echo "   2. Откройте файл на телефоне"
+        echo "   3. Разрешите установку из неизвестных источников"
+        echo "   4. Установите приложение"
+        echo ""
+        echo "✅ Готово! Приложение работает!"
